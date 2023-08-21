@@ -1,12 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 // database: Users table
 const { db } = require("../models"); // database
 const Users = db.Users; // Users model from database
+const Project = db.Project; // Project model from database
 // jwb token validation middleware
 const { AuthMiddleware } = require("../authMiddleware/AuthMiddleware");
 const { sign } = require("jsonwebtoken");
+// a storage strategy for multer which is used for image
+const storage = multer.memoryStorage(); // Store files in memory as buffers
+const upload = multer({ storage: storage });
 
 // handles registration route
 router.post("/register", async (req, res, next) => {
@@ -66,7 +71,7 @@ router.post("/login", async (req, res) => {
 router.get("/profile/byId/:profileId", async (req, res) => {
   const profileId = req.params.profileId;
   const profileInfo = await Users.findByPk(profileId, {
-    attributes: { exclude: ["password"] },
+    attributes: { exclude: ["password", "isAdmin"] },
   }); // attribute field excludes selected column
 
   res.status(200).json({ profileInfo: profileInfo });
@@ -114,5 +119,27 @@ router.put("/changePassword", AuthMiddleware, async (req, res) => {
     }
   });
 });
+// add project
+router.post(
+  "/addProject",
+  upload.single("imageOfProject"),
+  async (req, res) => {
+    const { nameOfProject, urlOfProject } = req.body;
+    const imageOfProject = req.file.buffer;
+    try {
+      const addProject = await Project.create({
+        nameOfProject,
+        urlOfProject,
+        imageOfProject,
+      });
+      res.status(200).json({ message: "Project added successfully" });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ error: "An error occured while adding the project" });
+    }
+  },
+);
 
 module.exports = router;
