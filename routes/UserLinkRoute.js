@@ -14,7 +14,7 @@ const storage = multer.memoryStorage(); // Store files in memory as buffers
 const upload = multer({ storage: storage });
 
 // handles registration route
-router.post("/register", async (req, res, next) => {
+router.post("/register", async (req, res) => {
   const { username, password, firstname, lastname, isAdmin } = req.body;
   // hashing user's password and creating new user
   bcrypt.hash(password, 10).then((hash) => {
@@ -32,13 +32,13 @@ router.post("/register", async (req, res, next) => {
   });
 });
 // checks username before proceeding to confirmation page
-router.post("/register/checkUserInfo", async (req, res) => {
+router.post("/register/checkUserInfo", async (req, res, next) => {
   const { username } = req.body;
   const user = await Users.findOne({ where: { username: username } });
   if (user) {
     return res.status(400).json({ error: "username should be unique" });
   }
-  next();
+  res.status(200).json({});
 });
 // handles login route
 router.post("/login", async (req, res) => {
@@ -141,5 +141,22 @@ router.post(
     }
   },
 );
+// delete user account
+router.delete("/deleteAccount/:profileId", async (req, res) => {
+  try {
+    const profileId = req.params.profileId;
+    const profile = await Users.destroy({ where: { id: profileId } });
+    if (profile === 0) {
+      console.log(`No record with ID ${profileId} found.`);
+    } else {
+      console.log(`Record with ID ${profileId} deleted successfully.`);
+      res
+        .status(200)
+        .json({ message: "Account has been deleted successfully" });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 module.exports = router;

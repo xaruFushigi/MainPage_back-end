@@ -27,6 +27,8 @@ const db = require("./models"); // goes to 'models' folder and creates table bas
 // ---------------- END OF MIDDLEWARES
 const UserLinkRoute = require("./routes/UserLinkRoute");
 app.use("/auth", UserLinkRoute);
+const ProjecLinkRoute = require("./routes/ProjectLinkRoute");
+app.use("/project", ProjecLinkRoute);
 // ---------------- END OF ROUTES
 db.sequelize.sync().then(() => {
   app.listen(process.env.PORT, () => {
