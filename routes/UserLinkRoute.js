@@ -6,13 +6,24 @@ const multer = require("multer");
 const { db } = require("../models"); // database
 const Users = db.Users; // Users model from database
 const Project = db.Project; // Project model from database
+const Resume = db.Resume; // Resumes model from database
 // jwb token validation middleware
 const { AuthMiddleware } = require("../authMiddleware/AuthMiddleware");
 const { sign } = require("jsonwebtoken");
 // a storage strategy for multer which is used for image
 const storage = multer.memoryStorage(); // Store files in memory as buffers
 const upload = multer({ storage: storage });
-
+// mail
+const nodemailer = require("nodemailer");
+// email service configuration
+const transporter = nodemailer.createTransport({
+  // Specifying email service configuration (SMTP settings, etc.)
+  service: process.env.EMAIL_SERVER,
+  auth: {
+    user: process.env.EMAIL_ADDRESS_SENDER,
+    pass: process.env.EMAIL_PASSWORD_SENDER,
+  },
+});
 // handles registration route
 router.post("/register", async (req, res) => {
   const { username, password, firstname, lastname, isAdmin } = req.body;
@@ -141,6 +152,58 @@ router.post(
     }
   },
 );
+// resume upload
+router.post(
+  "/uploadResume",
+  upload.single("uploadResume"),
+  async (req, res) => {
+    const { typeOfResume, nameOfResume } = req.body;
+    const uploadResume = req.file.buffer;
+    try {
+      const UploadedResume = await Resume.create({
+        nameOfResume,
+        typeOfResume,
+        uploadResume,
+      });
+      res
+        .status(200)
+        .json({ message: "Resume has been uploaded successfully" });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ error: "An error occured while adding the project" });
+    }
+  },
+);
+//download resume
+router.get("/downloadResume", async (req, res) => {
+  const resumeType = req.query.resumeType; // Retrieve the resumeType query parameter
+
+  // Logic to send the CV English file
+  const resume = await Resume.findOne({
+    where: { typeOfResume: resumeType },
+  });
+  if (!resume) {
+    return res.status(404).send("File not found");
+  }
+  if (!resume.uploadResume || !resume.nameOfResume) {
+    return res.status(500).send("Invalid resume data");
+  }
+  const contentType = resume.contentType || "application/octet-stream";
+  // Set response headers for download
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  );
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${resume.nameOfResume}"`,
+  );
+  // Send the file data as the response
+  res.send(resume.uploadResume);
+});
 // delete user account
 router.delete("/deleteAccount/:profileId", async (req, res) => {
   try {
@@ -157,6 +220,31 @@ router.delete("/deleteAccount/:profileId", async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+// email functionality
+router.post("/sendMessage", (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  const mailOptions = {
+    from: process.env.EMAIL_ADDRESS_SENDER, // replace with your email address
+    to: process.env.EMAIL_ADDRESS_RECEIVER, // replace with Santa Claus's email address
+    subject: subject,
+    text: `Email from ${name} \n 
+          ${name}'s email address: ${email}
+          message : ${message}`,
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("Error sending email:", error);
+    } else {
+      console.log("Email sent:", info.response);
+    }
+  });
+  return res
+    .status(200)
+    .json(
+      "You Message has been sent. Bokhodir will try to reply to your message as soons as possible. Thank you for your patience",
+    );
 });
 
 module.exports = router;
