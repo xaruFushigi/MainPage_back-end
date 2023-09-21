@@ -64,10 +64,14 @@ router.post("/login", async (req, res) => {
     if (!match) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
+    const payload = {
+      username: user.username,
+      exp: Math.floor(Date.now() / 10),
+    };
     // jsonwebtoken
     const accessToken = sign(
-      { username: user.username, id: user.id },
-      "secret", // session token secret
+      { payload, id: user.id },
+      process.env.SESSION_SECRET, // session token secret
     );
     // sending 200 status
     return res.status(200).json({

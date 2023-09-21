@@ -9,10 +9,9 @@ const AuthMiddleware = (req, res, next) => {
   } else {
     try {
       if (accessToken && accessToken !== "null") {
-        const validToken = verify(accessToken, process.env.SESSION_SECRET, {
-          expiresIn: "120s",
-        });
-        if (validToken) {
+        const validToken = verify(accessToken, process.env.SESSION_SECRET);
+        const currentTime = Math.floor(Date.now() / 10);
+        if (validToken.exp < currentTime) {
           // Token is still valid
           req.user = validToken;
           return next();
