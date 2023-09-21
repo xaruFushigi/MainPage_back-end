@@ -5,28 +5,26 @@ const AuthMiddleware = (req, res, next) => {
   const accessToken = req.header("accessToken");
 
   if (!accessToken) {
-    return res
-      .status(405)
-      .json({ error: "Log In to be able to access portfolio" });
+    return res.status(405).json({ error: "Log in to make comments" });
   } else {
     try {
       if (accessToken !== "null") {
         const validToken = verify(accessToken, process.env.SESSION_SECRET);
-        const expirationTime = Math.floor(Date.now() / 1000); // Token expires in 30 seconds
-        if (validToken.exp > expirationTime) {
+        const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+        if (validToken.exp > currentTime) {
+          // Token is still valid
           req.user = validToken;
           return next();
+        } else {
+          return res.status(405).json({ error: "Token has expired" });
         }
       } else {
-        return res
-          .status(405)
-          .json({ error: "Log In to be able to access portfolio" });
+        return res.status(405).json({ error: "Log in to make comments" });
       }
     } catch (error) {
-      return res.status(400).json({ error: error });
+      return res.status(400).json({ error: error.message });
     }
   }
-  // verifies jsonwebtoken
 };
 
 module.exports = { AuthMiddleware };
