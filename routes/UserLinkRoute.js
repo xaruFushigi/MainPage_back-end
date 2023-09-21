@@ -64,14 +64,14 @@ router.post("/login", async (req, res) => {
     if (!match) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
-    const payload = {
-      username: user.username,
-      exp: Math.floor(Date.now() / 10),
-    };
+    // Set the expiration time for the token (e.g., 1 hour)
+    const expiresIn = "30s";
+
     // jsonwebtoken
     const accessToken = sign(
-      { payload, id: user.id },
+      { username: user.username, id: user.id },
       process.env.SESSION_SECRET, // session token secret
+      { expiresIn }, // Options object including expiresIn
     );
     // sending 200 status
     return res.status(200).json({
