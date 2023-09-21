@@ -8,7 +8,7 @@ const AuthMiddleware = (req, res, next) => {
     return res.status(405).json({ error: "Log in to make comments" });
   } else {
     try {
-      if (accessToken !== "null") {
+      if (accessToken && accessToken !== "null") {
         const validToken = verify(accessToken, process.env.SESSION_SECRET);
         const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
         if (validToken.exp > currentTime) {
