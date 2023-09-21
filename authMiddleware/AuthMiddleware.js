@@ -10,7 +10,7 @@ const AuthMiddleware = (req, res, next) => {
     try {
       if (accessToken !== "null") {
         const validToken = verify(accessToken, process.env.SESSION_SECRET);
-        const expirationTime = Math.floor(Date.now() / 1000); // Token expires in 30 seconds
+        const expirationTime = Math.floor(Date.now() / 1000) + 30; // Token expires in 30 seconds
         req.user = validToken;
         if (validToken.exp > expirationTime) {
           return next();
