@@ -1,4 +1,5 @@
 const { verify } = require("jsonwebtoken");
+const dotenv = require("dotenv").config();
 
 const AuthMiddleware = (req, res, next) => {
   const accessToken = req.header("accessToken");
@@ -8,9 +9,10 @@ const AuthMiddleware = (req, res, next) => {
   } else {
     try {
       if (accessToken !== "null") {
-        const validToken = verify(accessToken, "secret");
+        const validToken = verify(accessToken, process.env.SESSION_SECRET);
+        const expirationTime = Math.floor(Date.now() / 1000) + 30; // Token expires in 30 seconds
         req.user = validToken;
-        if (validToken) {
+        if (validToken.exp < expirationTime) {
           return next();
         }
       } else {
