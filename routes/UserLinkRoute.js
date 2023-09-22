@@ -90,10 +90,10 @@ router.post("/login", async (req, res) => {
       });
       // sending 200 status
       return res.status(200).json({
-        success: `Logged In!!! Welcome back ${result.username} We missed You :)`,
-        accessToken: result.accessToken,
-        username: result.username,
-        id: result.id,
+        success: `Logged In!!! Welcome back ${logProcess.username} We missed You :)`,
+        accessToken: logProcess.accessToken,
+        username: logProcess.username,
+        id: logProcess.id,
       });
     } else {
       return res.status(405).json({ error: "Wrong Username Or Password" });
