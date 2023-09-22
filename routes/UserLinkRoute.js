@@ -40,15 +40,15 @@ router.post("/register", async (req, res) => {
   //     isAdmin: isAdmin || false, // set isAdmin based on request or default to false
   //   });
   // });
-  CreateUserInDatabase(
-    req.body.username,
-    req.body.password,
-    req.body.firstname,
-    req.body.lastname,
-    req.body.isAdmin,
+  CreateUserInDatabase({
+    username: req.body.username,
+    password: req.body.password,
+    firstname: req.body.firstname,
+    lastname: req.body.lastname,
+    isAdmin: req.body.isAdmin,
     Users,
     bcrypt,
-  );
+  });
   // sending 200 status
   res.status(200).json({
     success: `User: ${req.body.username} has been created. Welcome to the Site!!! `,
