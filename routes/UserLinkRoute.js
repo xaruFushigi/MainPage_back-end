@@ -76,7 +76,7 @@ router.post("/register/checkUserInfo", async (req, res) => {
 // handles login route
 router.post("/login", async (req, res) => {
   try {
-    const user = await logUserIn({
+    const user = logUserIn({
       username: req.body.username,
       Users,
     });
