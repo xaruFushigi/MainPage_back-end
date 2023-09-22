@@ -76,24 +76,20 @@ router.post("/register/checkUserInfo", async (req, res) => {
 // handles login route
 router.post("/login", async (req, res) => {
   try {
-    const user = logUserIn({
+    const user = await logUserIn({
       username: req.body.username,
+      password: req.body.password,
       Users,
+      bcrypt,
+      sign,
     });
     if (user) {
-      const logProcess = logUserInFunctionality({
-        username: req.body.username,
-        password: req.body.password,
-        bcrypt,
-        sign,
-        user,
-      });
       // sending 200 status
       return res.status(200).json({
-        success: `Logged In!!! Welcome back ${logProcess.username} We missed You :)`,
-        accessToken: logProcess.accessToken,
-        username: logProcess.username,
-        id: logProcess.id,
+        success: `Logged In!!! Welcome back ${user.username} We missed You :)`,
+        accessToken: user.accessToken,
+        username: user.username,
+        id: user.id,
       });
     } else {
       return res.status(405).json({ error: "Wrong Username Or Password" });
