@@ -25,72 +25,82 @@ const transporter = nodemailer.createTransport({
   },
 });
 // User Management
-const { User } = require("./User/User");
-const { CreateUserInDatabase } = require("./User/UserDatabase");
+const { logUserInFunctionality } = require("./User/User");
+const {
+  createNewUserInDatabase,
+  checkExistingUsernameBeforeRegistration,
+  logUserIn,
+} = require("./User/UserDatabase");
 // handles registration route
 router.post("/register", async (req, res) => {
-  // const { username, password, firstname, lastname, isAdmin } = req.body;
-  // // hashing user's password and creating new user
-  // bcrypt.hash(password, 10).then((hash) => {
-  //   Users.create({
-  //     username: username,
-  //     password: hash,
-  //     firstname: firstname,
-  //     lastname: lastname,
-  //     isAdmin: isAdmin || false, // set isAdmin based on request or default to false
-  //   });
-  // });
-  CreateUserInDatabase({
-    username: req.body.username,
-    password: req.body.password,
-    firstname: req.body.firstname,
-    lastname: req.body.lastname,
-    isAdmin: req.body.isAdmin,
-    Users,
-    bcrypt,
-  });
-  // sending 200 status
-  res.status(200).json({
-    success: `User: ${req.body.username} has been created. Welcome to the Site!!! `,
-  });
+  try {
+    // registering new user
+    createNewUserInDatabase({
+      username: req.body.username,
+      password: req.body.password,
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      isAdmin: req.body.isAdmin,
+      Users,
+      bcrypt,
+    });
+    if (createNewUserInDatabase) {
+      // sending 200 status
+      res.status(200).json({
+        success: `User: ${req.body.username} has been created. Welcome to the Site!!! `,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "unexpected error occured" });
+  }
 });
 // checks username before proceeding to confirmation page
-router.post("/register/checkUserInfo", async (req, res, next) => {
-  const { username } = req.body;
-  const user = await Users.findOne({ where: { username: username } });
-  if (user) {
-    return res.status(400).json({ error: "username should be unique" });
+router.post("/register/checkUserInfo", async (req, res) => {
+  try {
+    checkExistingUsernameBeforeRegistration({
+      username: req.body.username,
+      Users,
+    });
+
+    if (!checkExistingUsernameBeforeRegistration) {
+      return res.status(400).json({ error: "username should be unique" });
+    } else {
+      res
+        .status(200)
+        .json({ message: `username ${req.body.username} is available` });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "unexpected error occured" });
   }
-  res.status(200).json({});
 });
 // handles login route
 router.post("/login", async (req, res) => {
-  const user = await Users.findOne({ where: { username: req.body.username } });
-  // if username does not exist in the database
-  if (!user) {
-    return res.status(404).json({ error: "Wrong Username Or Password" });
-  }
-  // if password does not mathc/exits in the database
-  bcrypt.compare(req.body.password, user.password).then((match) => {
-    if (!match) {
+  try {
+    const user = await logUserIn({
+      username: req.body.username,
+      Users,
+    });
+    if (user) {
+      const logProcess = logUserInFunctionality({
+        username: req.body.username,
+        password: req.body.password,
+        bcrypt,
+        sign,
+        user,
+      });
+      // sending 200 status
+      return res.status(200).json({
+        success: `Logged In!!! Welcome back ${result.username} We missed You :)`,
+        accessToken: result.accessToken,
+        username: result.username,
+        id: result.id,
+      });
+    } else {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
-    // Set the expiration time for the token (e.g., 1 day)
-    const expiresIn = "1h";
-    // jsonwebtoken
-    const accessToken = sign(
-      { username: user.username, id: user.id }, // user input information
-      process.env.SESSION_SECRET, // session token secret
-      { expiresIn }, // Options object including expiresIn
-    );
-    // sending 200 status
-    return res.status(200).json({
-      success: `Logged In!!! Welcome back ${req.body.username} We missed You :)`,
-      accessToken: accessToken,
-      username: user.username,
-      id: user.id,
-    });
-  });
+  } catch (error) {
+    res.status(500).json({ message: "unexpected error occured" });
+  }
 });
 // handles user profile page
 router.get("/profile/byId/:profileId", async (req, res) => {
