@@ -1,4 +1,4 @@
-const UserDatabase = ({
+const CreateUserInDatabase = async ({
   username,
   password,
   firstname,
@@ -19,4 +19,4 @@ const UserDatabase = ({
   });
 };
 
-module.exports = { UserDatabase };
+module.exports = { CreateUserInDatabase };
