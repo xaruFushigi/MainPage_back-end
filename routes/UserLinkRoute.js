@@ -24,22 +24,34 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD_SENDER,
   },
 });
+// User Management
+const { User } = require("./User/User");
+const { CreateUserInDatabase } = require("./User/UserDatabase");
 // handles registration route
 router.post("/register", async (req, res) => {
-  const { username, password, firstname, lastname, isAdmin } = req.body;
-  // hashing user's password and creating new user
-  bcrypt.hash(password, 10).then((hash) => {
-    Users.create({
-      username: username,
-      password: hash,
-      firstname: firstname,
-      lastname: lastname,
-      isAdmin: isAdmin || false, // set isAdmin based on request or default to false
-    });
-  });
+  // const { username, password, firstname, lastname, isAdmin } = req.body;
+  // // hashing user's password and creating new user
+  // bcrypt.hash(password, 10).then((hash) => {
+  //   Users.create({
+  //     username: username,
+  //     password: hash,
+  //     firstname: firstname,
+  //     lastname: lastname,
+  //     isAdmin: isAdmin || false, // set isAdmin based on request or default to false
+  //   });
+  // });
+  CreateUserInDatabase(
+    req.body.username,
+    req.body.password,
+    req.body.firstname,
+    req.body.lastname,
+    req.body.isAdmin,
+    Users,
+    bcrypt,
+  );
   // sending 200 status
   res.status(200).json({
-    success: `User: ${username} has been created. Welcome to the Site!!! `,
+    success: `User: ${req.body.username} has been created. Welcome to the Site!!! `,
   });
 });
 // checks username before proceeding to confirmation page
@@ -53,14 +65,13 @@ router.post("/register/checkUserInfo", async (req, res, next) => {
 });
 // handles login route
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-  const user = await Users.findOne({ where: { username: username } });
+  const user = await Users.findOne({ where: { username: req.body.username } });
   // if username does not exist in the database
   if (!user) {
     return res.status(404).json({ error: "Wrong Username Or Password" });
   }
   // if password does not mathc/exits in the database
-  bcrypt.compare(password, user.password).then((match) => {
+  bcrypt.compare(req.body.password, user.password).then((match) => {
     if (!match) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
@@ -68,13 +79,13 @@ router.post("/login", async (req, res) => {
     const expiresIn = "1h";
     // jsonwebtoken
     const accessToken = sign(
-      { username: user.username, id: user.id },
+      { username: user.username, id: user.id }, // user input information
       process.env.SESSION_SECRET, // session token secret
       { expiresIn }, // Options object including expiresIn
     );
     // sending 200 status
     return res.status(200).json({
-      success: `Logged In!!! Welcome back ${username} We missed You :)`,
+      success: `Logged In!!! Welcome back ${req.body.username} We missed You :)`,
       accessToken: accessToken,
       username: user.username,
       id: user.id,
