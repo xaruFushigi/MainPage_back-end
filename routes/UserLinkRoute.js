@@ -73,7 +73,7 @@ router.post("/login", async (req, res) => {
     if (!match) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
-    const expiresIn = "1 day";
+    const expiresIn = process.env.SESSION_TOKEN_EXPIRATION_TIME;
     // jsonwebtoken
     const accessToken = sign(
       { username: user.username, id: user.id }, // user input information
