@@ -75,27 +75,31 @@ router.post("/register/checkUserInfo", async (req, res) => {
 });
 // handles login route
 router.post("/login", async (req, res) => {
-  try {
-    const user = await logUserIn({
-      username: req.body.username,
-      password: req.body.password,
-      Users,
-      bcrypt,
-      sign,
-    });
-    if (!user) {
+  const { username, password } = req.body;
+  const user = await Users.findOne({ where: { username: username } });
+  // if username does not exist in the database
+  if (!user) {
+    return res.status(404).json({ error: "Wrong Username Or Password" });
+  }
+  // if password does not mathc/exits in the database
+  bcrypt.compare(password, user.password).then((match) => {
+    if (!match) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
+    // jsonwebtoken
+    const accessToken = sign(
+      { username: user.username, id: user.id }, // user input information
+      process.env.SESSION_SECRET, // session token secret
+      { expiresIn }, // Options object including expiresIn
+    );
     // sending 200 status
     return res.status(200).json({
-      success: `Logged In!!! Welcome back ${user.username} We missed You :)`,
-      accessToken: user.accessToken,
+      success: `Logged In!!! Welcome back ${username} We missed You :)`,
+      accessToken: accessToken,
       username: user.username,
       id: user.id,
     });
-  } catch (error) {
-    res.status(500).json({ message: "unexpected error occured" });
-  }
+  });
 });
 // handles user profile page
 router.get("/profile/byId/:profileId", async (req, res) => {
