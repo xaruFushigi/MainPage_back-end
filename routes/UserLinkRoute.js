@@ -24,32 +24,23 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD_SENDER,
   },
 });
-// User Management
-const { logUserInFunctionality } = require("./User/User");
-const {
-  createNewUserInDatabase,
-  checkExistingUsernameBeforeRegistration,
-  logUserIn,
-} = require("./User/UserDatabase");
 // handles registration route
 router.post("/register", async (req, res) => {
   try {
-    // registering new user
-    createNewUserInDatabase({
-      username: req.body.username,
-      password: req.body.password,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-      isAdmin: req.body.isAdmin,
-      Users,
-      bcrypt,
-    });
-    if (createNewUserInDatabase) {
-      // sending 200 status
-      res.status(200).json({
-        success: `User: ${req.body.username} has been created. Welcome to the Site!!! `,
+    // hashing user's password and creating new user
+    bcrypt.hash(req.body.password, 10).then((hash) => {
+      Users.create({
+        username: req.body.username,
+        password: hash,
+        firstname: req.body.firstname,
+        lastname: req.body.lastname,
+        isAdmin: req.body.isAdmin || false, // set isAdmin based on request or default to false
       });
-    }
+    });
+    // sending 200 status
+    res.status(200).json({
+      success: `User: ${username} has been created. Welcome to the Site!!! `,
+    });
   } catch (error) {
     res.status(500).json({ message: "unexpected error occured" });
   }
@@ -57,18 +48,14 @@ router.post("/register", async (req, res) => {
 // checks username before proceeding to confirmation page
 router.post("/register/checkUserInfo", async (req, res) => {
   try {
-    checkExistingUsernameBeforeRegistration({
-      username: req.body.username,
-      Users,
-    });
-
-    if (!checkExistingUsernameBeforeRegistration) {
+    const { username } = req.body;
+    const user = await Users.findOne({ where: { username: username } });
+    if (user) {
       return res.status(400).json({ error: "username should be unique" });
-    } else {
-      res
-        .status(200)
-        .json({ message: `username ${req.body.username} is available` });
     }
+    res
+      .status(200)
+      .json({ message: `username ${req.body.username} is available` });
   } catch (error) {
     res.status(500).json({ message: "unexpected error occured" });
   }
