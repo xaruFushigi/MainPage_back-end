@@ -83,17 +83,16 @@ router.post("/login", async (req, res) => {
       bcrypt,
       sign,
     });
-    if (user) {
-      // sending 200 status
-      return res.status(200).json({
-        success: `Logged In!!! Welcome back ${user.username} We missed You :)`,
-        accessToken: user.accessToken,
-        username: user.username,
-        id: user.id,
-      });
-    } else {
+    if (!user) {
       return res.status(405).json({ error: "Wrong Username Or Password" });
     }
+    // sending 200 status
+    return res.status(200).json({
+      success: `Logged In!!! Welcome back ${user.username} We missed You :)`,
+      accessToken: user.accessToken,
+      username: user.username,
+      id: user.id,
+    });
   } catch (error) {
     res.status(500).json({ message: "unexpected error occured" });
   }
