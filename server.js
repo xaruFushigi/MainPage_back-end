@@ -24,6 +24,10 @@ const UserLinkRoute = require("./routes/UserLinkRoute");
 app.use("/auth", UserLinkRoute);
 const ProjecLinkRoute = require("./routes/ProjectLinkRoute");
 app.use("/project", ProjecLinkRoute);
+const NotesRoute = require("./routes/NotesRoute.js");
+app.use("/note", NotesRoute);
+const FolderRoute = require("./routes/FolderRoute.js");
+app.use("/folder", FolderRoute);
 // ---------------- END OF ROUTES
 db.sequelize.sync().then(() => {
   app.listen(process.env.PORT, () => {
