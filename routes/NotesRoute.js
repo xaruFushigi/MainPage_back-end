@@ -73,5 +73,20 @@ router.get("/getNotes/:folderId", async (req, res) => {
     throw error;
   }
 });
+// get note
+router.get("/getNote/:noteId", async (req, res) => {
+  try {
+    const GetNote = await Notes.findOne({
+      where: { id: req.params.noteId },
+    });
+    if (!GetNote || GetNote.length === 0) {
+      return res.status(404).json({ message: "No note has been found" });
+    }
+
+    return res.status(200).json({ noteSingle: GetNote });
+  } catch (error) {
+    throw error;
+  }
+});
 
 module.exports = router;
