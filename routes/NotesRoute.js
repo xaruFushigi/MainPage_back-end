@@ -90,5 +90,9 @@ router.get("/getNote/:noteId", async (req, res) => {
     throw error;
   }
 });
+// ping
+router.get("/", async (req, res) => {
+  res.status(200).json({ message: "server is responsing" });
+});
 
 module.exports = router;
