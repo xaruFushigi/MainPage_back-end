@@ -9,16 +9,42 @@ const Folder = db.Folder;
 // create folder
 router.post("/", async (req, res) => {
   try {
-    const CreateFolder = await Folder.create({
-      folder_name: req.body.folderName,
-    });
-    if (!CreateFolder) {
-      return res.status(500).json({ message: "failed to create folder" });
+    if (req.body.folderName === "") {
+      const CheckFolder = await Folder.findOne({
+        where: { folder_name: "new folder" },
+      });
+
+      const lastId = await Folder.max("id", {
+        raw: true,
+        plain: true,
+      });
+
+      let new_folder = "new folder";
+      let counter = lastId + 1;
+
+      if (!CheckFolder) {
+        new_folder = `${new_folder} (${counter})`;
+        const CreateDefaultFolder = await Folder.create({
+          folder_name: new_folder,
+        });
+        counter++;
+        return res.status(200).json({
+          message: "successfully created folder",
+          folderId: CreateDefaultFolder.id,
+        });
+      }
+    } else {
+      const CreateFolder = await Folder.create({
+        folder_name: req.body.folderName.trim(),
+      });
+      if (!CreateFolder) {
+        return res.status(500).json({ message: "failed to create folder" });
+      }
+      return res.status(200).json({
+        message: "successfully created folder",
+        folderId: CreateFolder.id,
+      });
     }
-    return res.status(200).json({
-      message: "successfully created folder",
-      folderId: CreateFolder.id,
-    });
   } catch (error) {
     throw error;
   }
